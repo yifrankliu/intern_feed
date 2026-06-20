@@ -7,3 +7,6 @@ __pycache__/
 venv/
 # os
 .DS_Store
+
+data/postings.json
+data/seen.json
