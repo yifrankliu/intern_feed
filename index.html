@@ -24,6 +24,12 @@
   input[type=search]{background:var(--panel);border:1px solid var(--border);
     color:var(--text);border-radius:8px;padding:8px 12px;min-width:260px;font-size:14px}
   input[type=search]:focus{outline:none;border-color:var(--accent)}
+  label.asof{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12.5px}
+  input[type=date]{background:var(--panel);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;padding:6px 9px;font-size:12.5px;color-scheme:dark}
+  input[type=date]:focus{outline:none;border-color:var(--accent)}
+  .clearbtn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0 2px}
+  .clearbtn:hover{color:var(--accent)}
   .group{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   .chip{background:var(--chip);border:1px solid var(--border);color:var(--muted);
     border-radius:999px;padding:5px 11px;cursor:pointer;user-select:none;font-size:12.5px;
@@ -88,6 +94,7 @@
 <div class="wrap">
   <div class="controls">
     <input type="search" id="q" placeholder="Search company, role, location…" autocomplete="off">
+    <label class="asof">posted as of <input type="date" id="asof"><button class="clearbtn" id="asofclear" title="clear date">✕</button></label>
     <div class="sep"></div>
     <div class="group" id="cats"></div>
     <div class="sep"></div>
@@ -128,7 +135,7 @@ const LS_VISIT = "internfeed.lastvisit.v1";
 const state = {
   data:null, postings:[],
   q:"", cats:new Set(), regions:new Set(),
-  newonly:false, early:false, hideclosed:true,
+  newonly:false, early:false, hideclosed:true, asof:"",
   sources:new Set(), allSources:[],
   sortKey:"first_seen", sortDir:-1,
   newIds:new Set(), prevSeen:new Set(),
@@ -205,6 +212,11 @@ function buildControls(){
       el.classList.toggle("on",state[k]); render();};
   });
   document.getElementById("q").addEventListener("input",e=>{state.q=e.target.value.toLowerCase();render();});
+  const asof=document.getElementById("asof");
+  const savedAsof=localStorage.getItem("internfeed.asof")||"";
+  if(savedAsof){asof.value=savedAsof; state.asof=savedAsof;}
+  asof.addEventListener("change",e=>{state.asof=e.target.value; localStorage.setItem("internfeed.asof",state.asof); render();});
+  document.getElementById("asofclear").onclick=()=>{state.asof=""; asof.value=""; localStorage.removeItem("internfeed.asof"); render();};
   document.querySelectorAll("th[data-sort]").forEach(th=>{
     th.onclick=()=>{const k=th.dataset.sort;
       if(state.sortKey===k) state.sortDir*=-1; else {state.sortKey=k; state.sortDir = (k==="company"||k==="category")?1:-1;}
@@ -223,6 +235,7 @@ function matches(p){
   if(state.early && !p.early_career) return false;
   if(state.cats.size && !state.cats.has(p.category)) return false;
   if(state.regions.size && !state.regions.has(p.region)) return false;
+  if(state.asof && p.posted_date && String(p.posted_date).slice(0,10) < state.asof) return false;
   if(state.sources.size && !(p.sources||[]).some(s=>state.sources.has(s))) return false;
   if(state.q){
     const hay=(p.company+" "+p.role_title+" "+(p.location||[]).join(" ")+" "+(p.sources||[]).join(" ")).toLowerCase();

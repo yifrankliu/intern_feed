@@ -19,12 +19,14 @@ commits an updated `data/postings.json`; the static `index.html` reads that file
   - *Target-company ATS* (speed): Greenhouse / Lever / Ashby public JSON, so you
     catch your shortlist before the community lists do. Workday/custom portals
     are marked **calendar-only** instead of scraped.
-- **Normalizes** every posting to one schema, **deduplicates** across sources
-  (merging the list of where each posting appeared), and **filters** to SWE / ML
-  / quant / hardware, US + Remote, with non-US (incl. Asia/HK) **flagged, not
-  dropped**.
+- **Normalizes** every posting to one schema and **deduplicates** across sources
+  (merging the list of where each posting appeared). The **category filter**
+  (SWE / ML / quant / hardware) applies **only to direct company ATS pulls** — to
+  strip out their business/PM/ops roles. The three community repos are already
+  curated tech-internship lists, so **all** of their roles are kept. Non-US roles
+  (incl. Asia/HK) are **flagged, not dropped**.
 - **Highlights** postings that are new since your last visit (tracked in your
-  browser's `localStorage`), with free-text search and quick filters.
+  browser's `localStorage`), with free-text search, quick filters (category, region, source, new-only), and a **"posted as of" date** control.
 
 ---
 

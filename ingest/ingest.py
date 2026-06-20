@@ -505,8 +505,14 @@ def dedupe(postings):
     return [merged[k] for k in order]
 
 
-def passes_filter(p, filters):
-    if p["category"] not in set(filters.get("categories", [])):
+def passes_filter(p, filters, repo_labels=None):
+    repo_labels = repo_labels or set()
+    # Is this posting backed by at least one community repo? Those lists are
+    # already curated tech-internship feeds, so we keep ALL their roles. The
+    # category filter (SWE/ML/quant/hardware) applies only to direct ATS pulls,
+    # where a company board also carries business/PM/ops roles we don't want.
+    is_repo = any(s in repo_labels for s in (p.get("sources") or []))
+    if not is_repo and p["category"] not in set(filters.get("categories", [])):
         return False
     if not filters.get("include_intl", True) and p["region"] == "intl":
         return False
@@ -595,7 +601,9 @@ def main():
     log(f"after dedupe: {len(deduped)}")
 
     # ---- Filter -----------------------------------------------------------
-    kept = [p for p in deduped if passes_filter(p, filters)]
+    repo_labels = {r.get("source_label", r.get("name"))
+                   for r in repos_cfg.get("repos", [])}
+    kept = [p for p in deduped if passes_filter(p, filters, repo_labels)]
     log(f"after filter: {len(kept)}")
 
     # ---- cumulative seen-tracker (flap-proof first_seen + archive) --------

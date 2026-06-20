@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-06-20T09:48:23+00:00",
+  "generated_at": "2026-06-20T10:33:09+00:00",
   "counts": {
     "total": 27,
     "new_this_run": 0,
     "reappeared_this_run": 0,
-    "delisted_this_run": 100,
+    "delisted_this_run": 0,
     "total_ever_seen": 127,
     "raw": 143,
     "deduped": 137
   },
   "filters": {
-    "_comment": "What counts as relevant, plus retention for the cumulative seen-tracker. categories: keep only postings in this set. include_intl: keep non-US roles (flagged, not dropped). require_intern_keyword_for_ats: only keep ATS roles whose title looks like an internship. min_posted_date: drop postings posted before this YYYY-MM-DD (set to the current cycle's start; e.g. 2026-05-01 = ignore anything posted before May 2026). drop_unknown_posted_date: if true, also drop postings with no known date (README rows have none) -- default false. seen_retention_days: 0 = keep the full archive forever; >0 prunes long-delisted entries.",
+    "_comment": "What counts as relevant. categories: applies ONLY to direct company ATS pulls (community repos are already curated tech-internship lists, so ALL their roles are kept). include_intl: keep non-US roles (flagged, not dropped). require_intern_keyword_for_ats: only keep ATS roles whose title looks like an internship. min_posted_date: drop postings posted before this YYYY-MM-DD (applies to every source). drop_unknown_posted_date: also drop rows with no date (README rows have none) -- default false. seen_retention_days: 0 = keep the full archive forever; >0 prunes long-delisted entries.",
     "categories": [
       "swe",
       "ml",
@@ -228,8 +228,8 @@
       ],
       "id": "da51230e64f0",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "GoodRx",
@@ -252,8 +252,8 @@
       ],
       "id": "0e4e60755c1c",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Zoox",
@@ -276,8 +276,8 @@
       ],
       "id": "36828ba7c507",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "BMO",
@@ -300,8 +300,8 @@
       ],
       "id": "985bba19683b",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Apptronik",
@@ -324,8 +324,8 @@
       ],
       "id": "d4818b7bd4eb",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Tesla",
@@ -348,8 +348,8 @@
       ],
       "id": "1f81343694d3",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Apex Technology, Inc.",
@@ -372,8 +372,8 @@
       ],
       "id": "c2cd7a426454",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Paragon",
@@ -396,8 +396,8 @@
       ],
       "id": "2e20112366ca",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "General Astronautics",
@@ -420,8 +420,8 @@
       ],
       "id": "9bd54453ff89",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "DimeHealth AI",
@@ -444,8 +444,8 @@
       ],
       "id": "55180afabcac",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Dedalus Labs",
@@ -468,8 +468,8 @@
       ],
       "id": "18b1cb22d610",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Uber",
@@ -492,8 +492,8 @@
       ],
       "id": "00c4f32b95c8",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Tesla",
@@ -516,8 +516,8 @@
       ],
       "id": "9773795bc972",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Tesla",
@@ -540,8 +540,8 @@
       ],
       "id": "2b674fbb6d0e",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Tesla",
@@ -564,8 +564,8 @@
       ],
       "id": "6c6b64e2220b",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Tesla",
@@ -588,8 +588,8 @@
       ],
       "id": "06898dd13947",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Tesla",
@@ -612,8 +612,8 @@
       ],
       "id": "36768c28f6ab",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Veeam Software",
@@ -636,8 +636,8 @@
       ],
       "id": "c271c50cae4a",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Veeam Software",
@@ -660,8 +660,8 @@
       ],
       "id": "060def8fa121",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Amazon",
@@ -686,8 +686,8 @@
       ],
       "id": "42689a5e03b9",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Amazon",
@@ -717,8 +717,8 @@
       ],
       "id": "6d49ab1c6a7b",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Amazon",
@@ -741,8 +741,8 @@
       ],
       "id": "2ed6c3acfc49",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Snowflake",
@@ -766,8 +766,8 @@
       ],
       "id": "aa704a1c6f5d",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Snowflake",
@@ -791,8 +791,8 @@
       ],
       "id": "ccaf79d543bf",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Snowflake",
@@ -815,8 +815,8 @@
       ],
       "id": "99a627475773",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Skydio",
@@ -839,8 +839,8 @@
       ],
       "id": "4613234b01ed",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     },
     {
       "company": "Salesforce",
@@ -867,8 +867,8 @@
       ],
       "id": "d552e5f9a646",
       "first_seen": "2026-06-20T09:09:41+00:00",
-      "last_seen": "2026-06-20T09:48:23+00:00",
-      "times_seen": 3
+      "last_seen": "2026-06-20T10:33:09+00:00",
+      "times_seen": 4
     }
   ]
 }
