@@ -16,7 +16,7 @@ on:
       - "config/**"
 
 permissions:
-  contents: write          # needed to commit the refreshed data/postings.json
+  contents: write          # needed to commit the refreshed data files
 
 concurrency:
   group: refresh-feed
@@ -48,7 +48,8 @@ jobs:
         run: |
           git config user.name  "intern-feed-bot"
           git config user.email "actions@github.com"
-          git add data/postings.json data/seen.json
+          # -f because data/*.json are gitignored locally (the Action owns them)
+          git add -f data/postings.json data/seen.json
           if git diff --cached --quiet; then
             echo "No changes to data files"
           else
