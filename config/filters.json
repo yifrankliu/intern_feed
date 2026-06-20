@@ -1,0 +1,7 @@
+{
+  "_comment": "What counts as relevant. Edit freely; the ingest script reads this on every run. categories: keep only postings in this set. include_intl: keep non-US roles (flagged, not dropped) per the brief. require_intern_keyword_for_ats: only keep ATS roles whose title looks like an internship (the community repos are already intern-only).",
+  "categories": ["swe", "ml", "quant", "hardware"],
+  "include_remote": true,
+  "include_intl": true,
+  "require_intern_keyword_for_ats": true
+}

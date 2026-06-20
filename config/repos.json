@@ -1,0 +1,27 @@
+{
+  "_comment": "Community GitHub trackers (breadth). type=json reads a structured listings.json; type=readme parses the markdown table in a README. To add a repo, copy a block. To remove one, delete its block. When SimplifyJobs rolls over to a Summer2027 repo, just change name/branch below.",
+  "repos": [
+    {
+      "name": "SimplifyJobs/Summer2026-Internships",
+      "branch": "dev",
+      "type": "json",
+      "json_path": ".github/scripts/listings.json",
+      "source_label": "SimplifyJobs"
+    },
+    {
+      "name": "vanshb03/Summer2027-Internships",
+      "branch": "dev",
+      "type": "json",
+      "json_path": ".github/scripts/listings.json",
+      "source_label": "vanshb03"
+    },
+    {
+      "name": "sndsh404/summer-2027-internships",
+      "branch": "main",
+      "type": "readme",
+      "readme_path": "README.md",
+      "readme_section": "the list",
+      "source_label": "sndsh404"
+    }
+  ]
+}

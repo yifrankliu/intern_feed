@@ -1,0 +1,129 @@
+{
+  "_comment": "Target companies pulled directly from their ATS so you catch postings before the community lists. ats = greenhouse | lever | ashby | calendar-only. token = the board slug for that ATS. calendar-only entries are Workday/custom portals we deliberately do NOT scrape; track them manually (see notes). To add a company: find its ATS slug and add a block. To stop tracking: delete the block or set ats to calendar-only.",
+  "intern_keywords": [
+    "intern",
+    "internship",
+    "co-op",
+    "coop",
+    "student",
+    "sophomore",
+    "freshman",
+    "new grad",
+    "new-grad",
+    "university grad"
+  ],
+  "companies": [
+    {
+      "name": "Databricks",
+      "ats": "greenhouse",
+      "token": "databricks"
+    },
+    {
+      "name": "Datadog",
+      "ats": "greenhouse",
+      "token": "datadog"
+    },
+    {
+      "name": "Anthropic",
+      "ats": "greenhouse",
+      "token": "anthropic"
+    },
+    {
+      "name": "OpenAI",
+      "ats": "ashby",
+      "token": "openai"
+    },
+    {
+      "name": "Hudson River Trading",
+      "ats": "greenhouse",
+      "token": "wehrtyou"
+    },
+    {
+      "name": "Five Rings",
+      "ats": "greenhouse",
+      "token": "fiveringsllc"
+    },
+    {
+      "name": "Jane Street",
+      "ats": "greenhouse",
+      "token": "janestreetevents",
+      "note": "Greenhouse events board only; primary trading/SWE internships live on the custom janestreet.com portal (calendar-only)."
+    },
+    {
+      "name": "Marshall Wace",
+      "ats": "greenhouse",
+      "token": "mwinternshipprogram",
+      "note": "Internship Programmes board (London/NY/Singapore/HK interns). North-America-only board is 'mwnaintern'; firm-wide board is 'marshallwace'."
+    },
+    {
+      "name": "Google",
+      "ats": "calendar-only",
+      "note": "Custom careers.google.com portal."
+    },
+    {
+      "name": "Meta",
+      "ats": "calendar-only",
+      "note": "Custom metacareers.com portal."
+    },
+    {
+      "name": "Microsoft",
+      "ats": "calendar-only",
+      "note": "Custom careers.microsoft.com portal."
+    },
+    {
+      "name": "Google DeepMind",
+      "ats": "calendar-only",
+      "note": "Routes through Google careers portal."
+    },
+    {
+      "name": "NVIDIA",
+      "ats": "calendar-only",
+      "note": "Workday (nvidia.wd5.myworkdayjobs.com)."
+    },
+    {
+      "name": "Apple",
+      "ats": "calendar-only",
+      "note": "Custom jobs.apple.com portal."
+    },
+    {
+      "name": "PyTorch",
+      "ats": "calendar-only",
+      "note": "Open-source project (Meta/Linux Foundation); no dedicated corporate ATS."
+    },
+    {
+      "name": "Susquehanna (SIG)",
+      "ats": "calendar-only",
+      "note": "Custom careers.sig.com portal."
+    },
+    {
+      "name": "Two Sigma",
+      "ats": "calendar-only",
+      "note": "Custom careers.twosigma.com portal."
+    },
+    {
+      "name": "Citadel",
+      "ats": "calendar-only",
+      "note": "Custom citadel.com/careers portal."
+    },
+    {
+      "name": "Citadel Securities",
+      "ats": "calendar-only",
+      "note": "Custom citadelsecurities.com/careers portal."
+    },
+    {
+      "name": "Bloomberg",
+      "ats": "calendar-only",
+      "note": "Custom bloomberg.com/company/careers portal (only Bloomberg Philanthropies is on Greenhouse)."
+    },
+    {
+      "name": "Salesforce",
+      "ats": "calendar-only",
+      "note": "Workday (salesforce.wd12.myworkdayjobs.com)."
+    },
+    {
+      "name": "Rippling",
+      "ats": "calendar-only",
+      "note": "Runs its own ats.rippling.com (not Greenhouse/Lever/Ashby); still surfaces via the community repos."
+    }
+  ]
+}

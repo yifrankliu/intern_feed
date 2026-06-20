@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intern Feed</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --border:#2b333f;
+    --text:#e6edf3; --muted:#8b949e; --accent:#4493f8; --accent2:#3fb950;
+    --new:#f2cc60; --newbg:#2b2410; --chip:#21262d; --danger:#f85149;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--accent);text-decoration:none}
+  header{padding:16px 20px;border-bottom:1px solid var(--border);
+    display:flex;flex-wrap:wrap;align-items:baseline;gap:12px}
+  header h1{font-size:18px;margin:0;font-weight:650}
+  .meta{color:var(--muted);font-size:12px}
+  .meta b{color:var(--text);font-weight:600}
+  .wrap{padding:14px 20px 60px}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+  input[type=search]{background:var(--panel);border:1px solid var(--border);
+    color:var(--text);border-radius:8px;padding:8px 12px;min-width:260px;font-size:14px}
+  input[type=search]:focus{outline:none;border-color:var(--accent)}
+  .group{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .chip{background:var(--chip);border:1px solid var(--border);color:var(--muted);
+    border-radius:999px;padding:5px 11px;cursor:pointer;user-select:none;font-size:12.5px;
+    transition:.12s}
+  .chip:hover{border-color:var(--accent)}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .chip.on.cat-ml{background:#a371f7;border-color:#a371f7}
+  .chip.on.cat-quant{background:#3fb950;border-color:#3fb950}
+  .chip.on.cat-hardware{background:#db6d28;border-color:#db6d28}
+  .chip.on.new{background:var(--new);border-color:var(--new);color:#1a1400}
+  .sep{width:1px;height:22px;background:var(--border);margin:0 2px}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{position:sticky;top:0;background:var(--bg);color:var(--muted);font-weight:600;
+    font-size:12px;cursor:pointer;white-space:nowrap;z-index:2}
+  th .arr{opacity:.5;font-size:10px}
+  tr.row{cursor:pointer}
+  tr.row:hover td{background:var(--panel)}
+  tr.isnew td{background:var(--newbg)}
+  tr.isnew:hover td{background:#352c14}
+  tr.inactive{opacity:.5}
+  .co{font-weight:600}
+  .role{color:var(--text)}
+  .loc{color:var(--muted);font-size:12.5px}
+  .tag{display:inline-block;border-radius:5px;padding:1px 7px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+  .tag.swe{background:#1f6feb33;color:#79c0ff}
+  .tag.ml{background:#a371f733;color:#d2b4fc}
+  .tag.quant{background:#3fb95033;color:#7ee787}
+  .tag.hardware{background:#db6d2833;color:#ffa657}
+  .tag.other{background:#6e768133;color:#c9d1d9}
+  .badge{display:inline-block;background:var(--chip);border:1px solid var(--border);
+    border-radius:5px;padding:1px 6px;font-size:11px;color:var(--muted);margin:1px 3px 1px 0}
+  .badge.direct{border-color:var(--accent2);color:var(--accent2)}
+  .pill{display:inline-block;border-radius:5px;padding:1px 6px;font-size:10.5px;margin-left:5px;font-weight:600}
+  .pill.newp{background:var(--new);color:#1a1400}
+  .pill.intl{background:#6e768133;color:#ffa657;border:1px solid #db6d2855}
+  .pill.early{background:#1f6feb22;color:#79c0ff;border:1px solid #1f6feb55}
+  .pill.closed{background:#f8514922;color:#ff7b72;border:1px solid #f8514955}
+  .when{color:var(--muted);font-size:12.5px;white-space:nowrap}
+  .empty{color:var(--muted);padding:40px;text-align:center}
+  details.status{margin-top:18px;border:1px solid var(--border);border-radius:8px;background:var(--panel)}
+  details.status>summary{cursor:pointer;padding:10px 14px;color:var(--muted);font-size:13px}
+  .statgrid{padding:6px 14px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px}
+  .st{font-size:12.5px;padding:6px 9px;border-radius:6px;background:var(--panel2)}
+  .st .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+  .dot.ok{background:var(--accent2)} .dot.error{background:var(--danger)}
+  .dot.cal{background:var(--muted)}
+  .note{color:var(--muted);font-size:11.5px;margin-top:2px}
+  .footer{color:var(--muted);font-size:11.5px;margin-top:16px}
+  button.link{background:none;border:none;color:var(--accent);cursor:pointer;font-size:12px;padding:0}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚡ Intern Feed</h1>
+  <span class="meta" id="summary">loading…</span>
+  <span class="meta" id="newsummary"></span>
+  <span style="flex:1"></span>
+  <button class="link" id="markseen" title="Mark everything as seen">mark all seen</button>
+</header>
+
+<div class="wrap">
+  <div class="controls">
+    <input type="search" id="q" placeholder="Search company, role, location…" autocomplete="off">
+    <div class="sep"></div>
+    <div class="group" id="cats"></div>
+    <div class="sep"></div>
+    <div class="group" id="regions"></div>
+    <div class="sep"></div>
+    <span class="chip" data-toggle="newonly" id="newonly">✨ new only</span>
+    <span class="chip" data-toggle="early" id="early">early-career?</span>
+    <span class="chip on" data-toggle="hideclosed" id="hideclosed">hide closed</span>
+    <div class="sep"></div>
+    <div class="group" id="sources"></div>
+  </div>
+
+  <table>
+    <thead><tr>
+      <th data-sort="first_seen">First seen <span class="arr"></span></th>
+      <th data-sort="company">Company <span class="arr"></span></th>
+      <th>Role</th>
+      <th data-sort="category">Cat <span class="arr"></span></th>
+      <th>Location</th>
+      <th data-sort="posted_date">Posted <span class="arr"></span></th>
+      <th>Sources</th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <div class="empty" id="empty" style="display:none">No postings match these filters.</div>
+
+  <details class="status">
+    <summary id="statsum">Source coverage</summary>
+    <div class="statgrid" id="statgrid"></div>
+  </details>
+
+  <div class="footer" id="footer"></div>
+</div>
+
+<script>
+const LS_SEEN = "internfeed.seen.ids.v1";
+const LS_VISIT = "internfeed.lastvisit.v1";
+const state = {
+  data:null, postings:[],
+  q:"", cats:new Set(), regions:new Set(),
+  newonly:false, early:false, hideclosed:true,
+  sources:new Set(), allSources:[],
+  sortKey:"first_seen", sortDir:-1,
+  newIds:new Set(), prevSeen:new Set(),
+};
+const CATS=[["swe","SWE"],["ml","ML"],["quant","Quant"],["hardware","HW"]];
+const REGIONS=[["us","US"],["remote","Remote"],["intl","Intl"],["unknown","?"]];
+
+function fmtDate(iso){
+  if(!iso) return "—";
+  try{const d=new Date(iso); if(isNaN(d)) return iso.slice(0,10);
+    return d.toISOString().slice(0,10);}catch(e){return iso;}
+}
+function ago(iso){
+  if(!iso) return "";
+  const d=new Date(iso); if(isNaN(d)) return "";
+  const days=Math.floor((Date.now()-d.getTime())/86400000);
+  if(days<=0) return "today"; if(days===1) return "1d ago"; if(days<30) return days+"d ago";
+  return Math.floor(days/30)+"mo ago";
+}
+function loadSeen(){
+  try{return new Set(JSON.parse(localStorage.getItem(LS_SEEN)||"[]"));}
+  catch(e){return new Set();}
+}
+function saveSeen(ids){ localStorage.setItem(LS_SEEN, JSON.stringify([...ids])); }
+
+async function init(){
+  state.prevSeen = loadSeen();
+  let res;
+  try{ res = await fetch("./data/postings.json?_="+Date.now()); }
+  catch(e){ document.getElementById("summary").textContent="Could not load data/postings.json"; return; }
+  if(!res.ok){ document.getElementById("summary").textContent="data/postings.json not found ("+res.status+")"; return; }
+  state.data = await res.json();
+  state.postings = state.data.postings||[];
+  // compute new-since-last-visit
+  state.newIds = new Set(state.postings.filter(p=>!state.prevSeen.has(p.id)).map(p=>p.id));
+  // all sources
+  const ss=new Set(); state.postings.forEach(p=>(p.sources||[]).forEach(s=>ss.add(s)));
+  state.allSources=[...ss].sort();
+  buildControls();
+  render();
+  renderStatus();
+  // after showing, persist current ids as seen for next visit
+  const cur=new Set(state.postings.map(p=>p.id));
+  // keep union so closed/removed ones don't reappear as new if they come back soon
+  state.prevSeen.forEach(id=>cur.add(id));
+  saveSeen(cur);
+  localStorage.setItem(LS_VISIT, new Date().toISOString());
+}
+
+function buildControls(){
+  const cw=document.getElementById("cats");
+  CATS.forEach(([k,l])=>{
+    const c=document.createElement("span");
+    c.className="chip cat-"+k; c.textContent=l; c.dataset.cat=k;
+    c.onclick=()=>{toggleSet(state.cats,k,c);render();};
+    cw.appendChild(c);
+  });
+  const rw=document.getElementById("regions");
+  REGIONS.forEach(([k,l])=>{
+    const c=document.createElement("span");
+    c.className="chip"; c.textContent=l; c.dataset.region=k;
+    c.onclick=()=>{toggleSet(state.regions,k,c);render();};
+    rw.appendChild(c);
+  });
+  const sw=document.getElementById("sources");
+  state.allSources.forEach(s=>{
+    const c=document.createElement("span");
+    c.className="chip"; c.textContent=s;
+    c.onclick=()=>{toggleSet(state.sources,s,c);render();};
+    sw.appendChild(c);
+  });
+  document.querySelectorAll("[data-toggle]").forEach(el=>{
+    el.onclick=()=>{const k=el.dataset.toggle; state[k]=!state[k];
+      el.classList.toggle("on",state[k]); render();};
+  });
+  document.getElementById("q").addEventListener("input",e=>{state.q=e.target.value.toLowerCase();render();});
+  document.querySelectorAll("th[data-sort]").forEach(th=>{
+    th.onclick=()=>{const k=th.dataset.sort;
+      if(state.sortKey===k) state.sortDir*=-1; else {state.sortKey=k; state.sortDir = (k==="company"||k==="category")?1:-1;}
+      render();};
+  });
+  document.getElementById("markseen").onclick=()=>{
+    const cur=new Set(state.postings.map(p=>p.id)); saveSeen(cur);
+    state.newIds=new Set(); render();
+  };
+}
+function toggleSet(set,key,el){ if(set.has(key))set.delete(key);else set.add(key); el.classList.toggle("on",set.has(key)); }
+
+function matches(p){
+  if(state.hideclosed && p.active===false) return false;
+  if(state.newonly && !state.newIds.has(p.id)) return false;
+  if(state.early && !p.early_career) return false;
+  if(state.cats.size && !state.cats.has(p.category)) return false;
+  if(state.regions.size && !state.regions.has(p.region)) return false;
+  if(state.sources.size && !(p.sources||[]).some(s=>state.sources.has(s))) return false;
+  if(state.q){
+    const hay=(p.company+" "+p.role_title+" "+(p.location||[]).join(" ")+" "+(p.sources||[]).join(" ")).toLowerCase();
+    if(!hay.includes(state.q)) return false;
+  }
+  return true;
+}
+function cmp(a,b){
+  const k=state.sortKey;
+  let va=a[k]||"", vb=b[k]||"";
+  if(k==="company"){va=va.toLowerCase();vb=vb.toLowerCase();}
+  if(va<vb) return -1*state.sortDir; if(va>vb) return 1*state.sortDir; return 0;
+}
+function render(){
+  const list=state.postings.filter(matches).sort(cmp);
+  const tb=document.getElementById("rows"); tb.innerHTML="";
+  document.getElementById("empty").style.display = list.length?"none":"block";
+  list.forEach(p=>{
+    const tr=document.createElement("tr");
+    tr.className="row"+(state.newIds.has(p.id)?" isnew":"")+(p.active===false?" inactive":"");
+    tr.onclick=(e)=>{ if(p.apply_url) window.open(p.apply_url,"_blank","noopener"); };
+    const isDirect=(p.sources||[]).includes(p.company);
+    const badges=(p.sources||[]).map(s=>`<span class="badge${s===p.company?' direct':''}">${s===p.company?'⚡ ':''}${esc(s)}</span>`).join("");
+    tr.innerHTML=`
+      <td class="when">${fmtDate(p.first_seen)}${state.newIds.has(p.id)?'<span class="pill newp">NEW</span>':''}<div class="note">${ago(p.first_seen)}</div></td>
+      <td class="co">${esc(p.company)}</td>
+      <td class="role">${esc(p.role_title)}
+        ${p.region==='intl'?`<span class="pill intl">${p.is_asia_hk?'Asia/HK':'Intl'}</span>`:''}
+        ${p.early_career?'<span class="pill early">early-career?</span>':''}
+        ${p.active===false?'<span class="pill closed">closed</span>':''}
+        ${p.sponsorship&&/no|not/i.test(p.sponsorship)?'<span class="pill closed">no sponsor</span>':''}
+      </td>
+      <td><span class="tag ${p.category}">${p.category}</span></td>
+      <td class="loc">${esc((p.location||[]).slice(0,3).join(" • "))||'—'}</td>
+      <td class="when">${fmtDate(p.posted_date)}</td>
+      <td>${badges}</td>`;
+    tb.appendChild(tr);
+  });
+  // header arrows
+  document.querySelectorAll("th[data-sort]").forEach(th=>{
+    const a=th.querySelector(".arr");
+    a.textContent = th.dataset.sort===state.sortKey ? (state.sortDir<0?"▼":"▲") : "";
+  });
+  const c=state.data.counts||{};
+  document.getElementById("summary").innerHTML=
+    `<b>${list.length}</b> shown · <b>${state.postings.length}</b> total · updated ${fmtDate(state.data.generated_at)} ${ago(state.data.generated_at)}`;
+  const nNew=state.newIds.size;
+  document.getElementById("newsummary").innerHTML = nNew?`· <b style="color:var(--new)">${nNew} new</b> since your last visit`:"· nothing new since last visit";
+}
+function renderStatus(){
+  const ss=state.data.sources||[];
+  const ok=ss.filter(s=>s.status==='ok').length;
+  const cal=ss.filter(s=>s.status==='calendar-only').length;
+  const pend=ss.filter(s=>s.status==='pending').length;
+  const err=ss.filter(s=>s.status==='error').length;
+  document.getElementById("statsum").textContent=
+    `Source coverage — ${ok} live, ${cal} calendar-only`+(pend?`, ${pend} pending`:``)+(err?`, ${err} error`:``)+` (click to expand)`;
+  const g=document.getElementById("statgrid"); g.innerHTML="";
+  ss.forEach(s=>{
+    const d=document.createElement("div"); d.className="st";
+    const cls=s.status==='ok'?'ok':(s.status==='error'?'error':'cal');
+    d.innerHTML=`<span class="dot ${cls}"></span><b>${esc(s.name)}</b>
+      <span class="note">${s.status==='ok'?(s.count+' roles · '+(s.ats||s.kind)):
+        s.status==='calendar-only'?'track manually':
+        s.status==='pending'?'awaits first run':('error: '+esc(s.error||''))}</span>
+      ${s.note?`<div class="note">${esc(s.note)}</div>`:''}`;
+    g.appendChild(d);
+  });
+  document.getElementById("footer").innerHTML=
+    `Grad-year filtering is approximate — these sources rarely encode class year, so "early-career?" is inferred from title keywords and may miss or over-flag roles. ` +
+    `Calendar-only companies (Workday/custom portals) are listed above but not auto-pulled; check them manually. ` +
+    `Click any row to open its application page.`;
+}
+function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+init();
+</script>
+</body>
+</html>

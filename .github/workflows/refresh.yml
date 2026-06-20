@@ -1,0 +1,57 @@
+name: Refresh internship feed
+
+on:
+  schedule:
+    # Four checks/day at 00:00, 06:00, 12:00, 18:00 New Haven (US Eastern) time.
+    # GitHub cron is UTC and does NOT follow DST, so these UTC hours are set for
+    # EDT (UTC-4), which is in effect spring->fall. During EST (winter) the runs
+    # land one hour earlier in local time (23:00/05:00/11:00/17:00 ET).
+    # For exact EST instead, use: 0 5,11,17,23 * * *
+    - cron: "0 4,10,16,22 * * *"
+  workflow_dispatch: {}   # lets you run it manually from the Actions tab
+  push:
+    branches: [ main ]
+    paths:
+      - "ingest/**"
+      - "config/**"
+
+permissions:
+  contents: write          # needed to commit the refreshed data/postings.json
+
+concurrency:
+  group: refresh-feed
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Persist ETag cache between runs so we make polite conditional requests.
+      - uses: actions/cache@v4
+        with:
+          path: ingest/cache
+          key: intern-feed-etags
+
+      - name: Install deps
+        run: pip install -r ingest/requirements.txt
+
+      - name: Run ingestion
+        run: python ingest/ingest.py
+
+      - name: Commit updated data if changed
+        run: |
+          git config user.name  "intern-feed-bot"
+          git config user.email "actions@github.com"
+          git add data/postings.json
+          if git diff --cached --quiet; then
+            echo "No changes to postings.json"
+          else
+            git commit -m "data: refresh postings ($(date -u +%FT%TZ))"
+            git push
+          fi
