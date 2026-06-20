@@ -1,7 +1,10 @@
 {
-  "_comment": "What counts as relevant. Edit freely; the ingest script reads this on every run. categories: keep only postings in this set. include_intl: keep non-US roles (flagged, not dropped) per the brief. require_intern_keyword_for_ats: only keep ATS roles whose title looks like an internship (the community repos are already intern-only).",
+  "_comment": "What counts as relevant, plus retention for the cumulative seen-tracker. categories: keep only postings in this set. include_intl: keep non-US roles (flagged, not dropped). require_intern_keyword_for_ats: only keep ATS roles whose title looks like an internship. min_posted_date: drop postings posted before this YYYY-MM-DD (set to the current cycle's start; e.g. 2026-05-01 = ignore anything posted before May 2026). drop_unknown_posted_date: if true, also drop postings with no known date (README rows have none) -- default false. seen_retention_days: 0 = keep the full archive forever; >0 prunes long-delisted entries.",
   "categories": ["swe", "ml", "quant", "hardware"],
   "include_remote": true,
   "include_intl": true,
-  "require_intern_keyword_for_ats": true
+  "require_intern_keyword_for_ats": true,
+  "min_posted_date": "2026-05-01",
+  "drop_unknown_posted_date": false,
+  "seen_retention_days": 0
 }

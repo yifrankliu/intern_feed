@@ -41,6 +41,10 @@ CONFIG_DIR = os.path.join(ROOT, "config")
 DATA_DIR = os.path.join(ROOT, "data")
 CACHE_DIR = os.path.join(HERE, "cache")
 OUT_FILE = os.path.join(DATA_DIR, "postings.json")
+# Cumulative, id-keyed tracker of every posting ever seen. Committed to the repo
+# so it persists across runs. Makes first_seen monotonic (flap-proof) and serves
+# as a permanent archive even after a posting is delisted from its source.
+SEEN_FILE = os.path.join(DATA_DIR, "seen.json")
 
 USER_AGENT = "intern-feed/1.0 (+personal aggregator; consumes public job JSON)"
 TIMEOUT = 30
@@ -482,10 +486,20 @@ def dedupe(postings):
             for loc in p["location"]:
                 if loc not in ex["location"]:
                     ex["location"].append(loc)
-            # keep earliest known posted_date
+            # A role is OPEN if ANY source still lists it as active. The
+            # community repos lag on closing, and the same role can appear once
+            # per season (our key strips year/season), so a stale "closed" copy
+            # must not mask a fresh open one.
+            ex["active"] = bool(ex.get("active", True)) or bool(p.get("active", True))
+            # early-career signal: keep it if any copy flags it
+            ex["early_career"] = bool(ex.get("early_career")) or bool(p.get("early_career"))
+            # keep the LATEST posted_date (freshest signal), not the earliest
             if p["posted_date"] and (not ex["posted_date"]
-                                     or p["posted_date"] < ex["posted_date"]):
+                                     or p["posted_date"] > ex["posted_date"]):
                 ex["posted_date"] = p["posted_date"]
+            # prefer a known sponsorship note over an empty one
+            if not ex.get("sponsorship") and p.get("sponsorship"):
+                ex["sponsorship"] = p["sponsorship"]
             # recompute region now that locations may have grown
             ex["region"], ex["is_remote"], ex["is_asia_hk"] = region_for(ex["location"])
     return [merged[k] for k in order]
@@ -498,6 +512,17 @@ def passes_filter(p, filters):
         return False
     if not filters.get("include_remote", True) and p["region"] == "remote":
         return False
+    # Drop postings known to be older than the cutoff (e.g. previous cycle).
+    # Compared on the ISO date prefix; postings with NO known date are kept
+    # unless drop_unknown_posted_date is set (README rows carry no date).
+    min_posted = filters.get("min_posted_date")
+    if min_posted:
+        pd = p.get("posted_date")
+        if pd:
+            if str(pd)[:10] < str(min_posted)[:10]:
+                return False
+        elif filters.get("drop_unknown_posted_date", False):
+            return False
     return True
 
 
@@ -573,22 +598,76 @@ def main():
     kept = [p for p in deduped if passes_filter(p, filters)]
     log(f"after filter: {len(kept)}")
 
-    # ---- first_seen persistence ------------------------------------------
-    prev = load_json(OUT_FILE, {}) or {}
-    prev_first = {}
-    for p in prev.get("postings", []):
-        k = f"{norm_company(p['company'])}|{norm_title(p['role_title'])}|{host_of(p['apply_url'])}"
-        prev_first[k] = p.get("first_seen")
+    # ---- cumulative seen-tracker (flap-proof first_seen + archive) --------
+    # Load the cumulative store: { id: {first_seen, last_seen, times_seen,
+    # currently_listed, delisted_at, + last snapshot of the posting} }.
+    # Because we key off every id we've EVER seen (not just the previous run),
+    # first_seen never resets when a posting disappears and later reappears.
+    seen_doc = load_json(SEEN_FILE, {}) or {}
+    seen_store = seen_doc.get("postings", {}) if isinstance(seen_doc, dict) else {}
     seen_now = now_iso()
-    new_count = 0
+
+    run_ids = set()
+    new_count = 0          # ids never seen before in all of history (true new)
+    reappeared = 0         # ids that were delisted and are back this run
     for p in kept:
         k = f"{norm_company(p['company'])}|{norm_title(p['role_title'])}|{host_of(p['apply_url'])}"
-        p["id"] = hashlib.sha1(k.encode("utf-8")).hexdigest()[:12]
-        if prev_first.get(k):
-            p["first_seen"] = prev_first[k]
+        pid = hashlib.sha1(k.encode("utf-8")).hexdigest()[:12]
+        p["id"] = pid
+        run_ids.add(pid)
+        rec = seen_store.get(pid)
+        if rec:
+            # Known historically -> keep the original first_seen (monotonic).
+            p["first_seen"] = rec.get("first_seen", seen_now)
+            if not rec.get("currently_listed", False):
+                reappeared += 1
+            rec["last_seen"] = seen_now
+            rec["times_seen"] = rec.get("times_seen", 1) + 1
+            rec["currently_listed"] = True
+            rec.pop("delisted_at", None)
         else:
             p["first_seen"] = seen_now
             new_count += 1
+            rec = {"first_seen": seen_now, "last_seen": seen_now,
+                   "times_seen": 1, "currently_listed": True}
+            seen_store[pid] = rec
+        # Refresh the archived snapshot, and expose tracker fields on the posting.
+        rec.update({"company": p["company"], "role_title": p["role_title"],
+                    "apply_url": p["apply_url"], "category": p["category"],
+                    "location": p["location"], "sources": p["sources"]})
+        p["last_seen"] = rec["last_seen"]
+        p["times_seen"] = rec["times_seen"]
+
+    # Anything in the store but not in this run is now delisted (kept in archive).
+    delisted = 0
+    for pid, rec in seen_store.items():
+        if pid not in run_ids and rec.get("currently_listed", False):
+            rec["currently_listed"] = False
+            rec["delisted_at"] = seen_now
+            delisted += 1
+
+    # Optional retention: drop long-delisted entries only if configured (>0 days).
+    retention = filters.get("seen_retention_days", 0) or 0
+    if retention and retention > 0:
+        cutoff = (dt.datetime.now(dt.timezone.utc)
+                  - dt.timedelta(days=retention)).replace(microsecond=0).isoformat()
+        stale = [pid for pid, r in seen_store.items()
+                 if not r.get("currently_listed", False)
+                 and (r.get("last_seen") or "") < cutoff]
+        for pid in stale:
+            del seen_store[pid]
+        if stale:
+            log(f"pruned {len(stale)} entries older than {retention}d from seen.json")
+
+    # Persist the cumulative tracker.
+    with open(SEEN_FILE, "w", encoding="utf-8") as f:
+        json.dump({
+            "updated_at": seen_now,
+            "total_ever_seen": len(seen_store),
+            "currently_listed": sum(1 for r in seen_store.values()
+                                    if r.get("currently_listed")),
+            "postings": seen_store,
+        }, f, ensure_ascii=False, indent=2)
 
     # newest first_seen first; tie-break on posted_date
     kept.sort(key=lambda p: (p.get("first_seen") or "", p.get("posted_date") or ""),
@@ -599,6 +678,9 @@ def main():
         "counts": {
             "total": len(kept),
             "new_this_run": new_count,
+            "reappeared_this_run": reappeared,
+            "delisted_this_run": delisted,
+            "total_ever_seen": len(seen_store),
             "raw": len(raw),
             "deduped": len(deduped),
         },
@@ -608,7 +690,8 @@ def main():
     }
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
-    log(f"wrote {OUT_FILE}: {len(kept)} postings ({new_count} new this run)")
+    log(f"wrote {OUT_FILE}: {len(kept)} live ({new_count} new, {reappeared} "
+        f"reappeared, {delisted} delisted; {len(seen_store)} ever seen)")
 
     # Non-zero exit only if literally every source failed (so CI can alert),
     # but still write whatever we have.

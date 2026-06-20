@@ -34,7 +34,8 @@ commits an updated `data/postings.json`; the static `index.html` reads that file
 intern-feed/
 ├─ index.html               # the whole site (no build step)
 ├─ data/
-│  └─ postings.json         # generated output the site reads (seeded; refreshed by the Action)
+│  ├─ postings.json         # current live feed the site reads (seeded; refreshed by the Action)
+│  └─ seen.json             # cumulative archive of every posting ever seen (id-keyed)
 ├─ config/
 │  ├─ repos.json            # community GitHub trackers
 │  ├─ companies.json        # target companies + ATS tokens (or calendar-only)
@@ -138,9 +139,17 @@ but not pulled, so you can track it on your own calendar.
   "categories": ["swe", "ml", "quant", "hardware"],  // keep only these
   "include_remote": true,
   "include_intl": true,                  // keep non-US roles (flagged, not dropped)
-  "require_intern_keyword_for_ats": true // ATS feeds: keep only intern-looking roles
+  "require_intern_keyword_for_ats": true,// ATS feeds: keep only intern-looking roles
+  "min_posted_date": "2026-05-01",       // drop anything posted before this date
+  "drop_unknown_posted_date": false,     // also drop rows with no date? (README rows have none)
+  "seen_retention_days": 0               // 0 = keep the archive forever
 }
 ```
+
+`min_posted_date` ignores stale postings from earlier cycles: any posting whose
+`posted_date` is before this `YYYY-MM-DD` is dropped entirely (never ingested,
+never displayed, and not archived in `seen.json`). Postings with **no** date
+(e.g. README-table rows) are kept unless `drop_unknown_posted_date` is `true`.
 
 ---
 
@@ -158,6 +167,31 @@ but not pulled, so you can track it on your own calendar.
 | Google, Meta, Microsoft, Google DeepMind, Apple, NVIDIA, PyTorch, Susquehanna (SIG), Two Sigma, Citadel, Citadel Securities, Bloomberg, Salesforce, Rippling | — | **calendar-only** (Workday / custom / own ATS) |
 
 ---
+
+## History & the cumulative seen-tracker
+
+Alongside the live `postings.json`, the pipeline maintains `data/seen.json` — a
+permanent, id-keyed record of **every posting it has ever seen**. Each run:
+
+- gives every posting a stable `id` = `sha1(normalized_company | normalized_title | apply-URL host)`;
+- looks that `id` up in `seen.json`, so `first_seen` is **monotonic** — it never
+  resets, even if a posting disappears for a while and later comes back
+  (the old "reappears as new" bug is gone);
+- marks postings that vanished from all sources as `currently_listed: false`
+  (with a `delisted_at` time) instead of forgetting them — so closed roles stay
+  archived;
+- records `times_seen`, `last_seen`, and a snapshot of each posting (company,
+  title, url, category, location, sources).
+
+`postings.json` stays the *current* feed (only live roles, each now also carrying
+`first_seen`, `last_seen`, `times_seen`). `seen.json` is the *history* — query it
+for trends, or to recover a role that has already closed. Each run reports
+`new_this_run`, `reappeared_this_run`, `delisted_this_run`, and `total_ever_seen`.
+
+By default the archive is kept forever (`"seen_retention_days": 0` in
+`filters.json`). Set it to a positive number of days to prune entries that have
+been delisted longer than that. The GitHub Action commits both `postings.json`
+and `seen.json` each run, so the history is versioned in git too.
 
 ## A note on honesty / limitations
 
