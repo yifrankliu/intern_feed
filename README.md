@@ -30,6 +30,19 @@ commits an updated `data/postings.json`; the static `index.html` reads that file
 
 ---
 
+## Applied-jobs tracker
+
+Click **+ applied** on any posting to add it to your tracker. The **Applied** tab
+(top-left) is a full pipeline view: per-job **status** (Applied / Interview / Offer /
+Rejected), an editable **applied date**, and a free-text **notes** field. Everything
+persists in the browser, and **export CSV** gives you a portable snapshot any time.
+
+For a permanent, check-from-anywhere copy, connect a Google Sheet via **⚙ sync**:
+every applied action and edit is pushed to a Sheet you own. One-time setup (a free
+Google Apps Script web app) is in **`apps-script/SETUP.md`**; the script is
+**`apps-script/Code.gs`**. Without a sync URL, the tracker still works fully in the
+browser.
+
 ## Project layout
 
 ```
