@@ -43,6 +43,17 @@ jobs:
 
       - name: Run ingestion
         run: python ingest/ingest.py
+        env:
+          # Email digest of brand-new postings. Set these as repo secrets
+          # (Settings → Secrets and variables → Actions). If any are missing,
+          # the digest is skipped and the build still succeeds.
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+          # Recipient defaults to frank.liu@yale.edu in code; override here if desired.
+          DIGEST_TO: ${{ secrets.DIGEST_TO }}
 
       - name: Commit updated data if changed
         run: |

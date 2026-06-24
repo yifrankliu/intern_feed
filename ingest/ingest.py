@@ -26,8 +26,10 @@ import re
 import sys
 import time
 import html
+import smtplib
 import hashlib
 import datetime as dt
+from email.message import EmailMessage
 from urllib.parse import urlparse
 
 import requests
@@ -535,6 +537,140 @@ def passes_filter(p, filters, repo_labels=None):
 # --------------------------------------------------------------------------- #
 # Main
 # --------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
+# Email digest -- "push" notification for brand-new postings
+# --------------------------------------------------------------------------- #
+# Only fires when this run surfaced genuinely-new postings (first_seen == the
+# run timestamp). Credentials come ONLY from env vars / GitHub Actions secrets:
+#   SMTP_HOST   e.g. smtp.gmail.com         (required to send)
+#   SMTP_PORT   e.g. 587 (STARTTLS) or 465 (SSL); default 587
+#   SMTP_USER   the authenticating account  (required to send)
+#   SMTP_PASS   app password / SMTP token   (required to send)
+#   SMTP_FROM   From: address               (default: SMTP_USER)
+#   DIGEST_TO   recipient                    (default: frank.liu@yale.edu)
+# If host/user/pass are not all present (e.g. a local run), the digest is
+# skipped silently. Sending is wrapped so an email failure never fails the build.
+DIGEST_DEFAULT_TO = "frank.liu@yale.edu"
+
+
+def _digest_subject(new_postings, seen_now):
+    day = (seen_now or now_iso())[:10]
+    n = len(new_postings)
+    return f"[INTERN-FEED] {n} new posting{'' if n == 1 else 's'} — {day}"
+
+
+def _digest_bodies(new_postings, counts):
+    """Return (text, html) bodies for the digest email."""
+    # newest-posted first, then company
+    rows = sorted(
+        new_postings,
+        key=lambda p: (p.get("posted_date") or "", p.get("company") or ""),
+        reverse=True,
+    )
+
+    # ---- plain text ----
+    tl = [f"{len(rows)} new internship posting(s) since the last run.", ""]
+    for p in rows:
+        loc = " | ".join((p.get("location") or [])[:3]) or "location n/a"
+        posted = (p.get("posted_date") or "")[:10] or "date n/a"
+        cat = (p.get("category") or "").upper()
+        srcs = ", ".join(p.get("sources") or [])
+        tl.append(f"- {p.get('company','?')} — {p.get('role_title','?')} [{cat}]")
+        tl.append(f"    {loc} | posted {posted} | via {srcs}")
+        tl.append(f"    {p.get('apply_url','')}")
+        tl.append("")
+    c = counts or {}
+    tl.append(
+        f"({c.get('total','?')} live total · {c.get('new_this_run','?')} new · "
+        f"{c.get('reappeared_this_run','?')} reappeared this run)"
+    )
+    text = "\n".join(tl)
+
+    # ---- html ----
+    def esc(s):
+        return html.escape("" if s is None else str(s))
+
+    cards = []
+    for p in rows:
+        loc = esc(" | ".join((p.get("location") or [])[:3]) or "location n/a")
+        posted = esc((p.get("posted_date") or "")[:10] or "date n/a")
+        cat = esc((p.get("category") or "").upper())
+        srcs = esc(", ".join(p.get("sources") or []))
+        url = esc(p.get("apply_url", "") or "")
+        cards.append(
+            f'<tr><td style="padding:10px 0;border-bottom:1px solid #e3e6ea">'
+            f'<div style="font-size:15px"><b>{esc(p.get("company","?"))}</b> '
+            f'<span style="color:#57606a">&mdash; </span>'
+            f'<a href="{url}" style="color:#0969da;text-decoration:none">'
+            f'{esc(p.get("role_title","?"))}</a> '
+            f'<span style="background:#eaeef2;border-radius:5px;padding:1px 6px;'
+            f'font-size:11px;color:#424a53">{cat}</span></div>'
+            f'<div style="font-size:12.5px;color:#57606a;margin-top:2px">'
+            f'{loc} &middot; posted {posted} &middot; via {srcs}</div></td></tr>'
+        )
+    c = counts or {}
+    foot = (
+        f'{esc(c.get("total","?"))} live total &middot; '
+        f'{esc(c.get("new_this_run","?"))} new &middot; '
+        f'{esc(c.get("reappeared_this_run","?"))} reappeared this run'
+    )
+    html_body = (
+        '<div style="font:14px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,'
+        'sans-serif;color:#1f2328;max-width:680px">'
+        f'<h2 style="font-size:17px;margin:0 0 4px">⚡ {len(rows)} new internship '
+        f'posting{"" if len(rows)==1 else "s"}</h2>'
+        '<table style="width:100%;border-collapse:collapse">'
+        + "".join(cards)
+        + "</table>"
+        f'<p style="font-size:12px;color:#57606a;margin-top:14px">{foot}</p>'
+        "</div>"
+    )
+    return text, html_body
+
+
+def send_digest(new_postings, counts, seen_now):
+    """Email Frank a digest of brand-new postings. No-op if nothing new or if
+    SMTP env vars are not configured. Never raises."""
+    if not new_postings:
+        log("digest: no new postings this run; not sending")
+        return
+
+    host = os.getenv("SMTP_HOST")
+    user = os.getenv("SMTP_USER")
+    pwd = os.getenv("SMTP_PASS")
+    if not (host and user and pwd):
+        log("digest: SMTP_HOST/USER/PASS not all set; skipping email "
+            f"({len(new_postings)} new postings would have been sent)")
+        return
+
+    port = int(os.getenv("SMTP_PORT", "587"))
+    from_addr = os.getenv("SMTP_FROM", user)
+    to_addr = os.getenv("DIGEST_TO", DIGEST_DEFAULT_TO)
+
+    text, html_body = _digest_bodies(new_postings, counts)
+    msg = EmailMessage()
+    msg["Subject"] = _digest_subject(new_postings, seen_now)
+    msg["From"] = from_addr
+    msg["To"] = to_addr
+    msg.set_content(text)
+    msg.add_alternative(html_body, subtype="html")
+
+    try:
+        if port == 465:
+            with smtplib.SMTP_SSL(host, port, timeout=TIMEOUT) as s:
+                s.login(user, pwd)
+                s.send_message(msg)
+        else:
+            with smtplib.SMTP(host, port, timeout=TIMEOUT) as s:
+                s.ehlo()
+                s.starttls()
+                s.login(user, pwd)
+                s.send_message(msg)
+        log(f"digest: emailed {len(new_postings)} new postings to {to_addr}")
+    except Exception as e:  # noqa
+        log(f"digest: ERROR sending email ({type(e).__name__}: {e}); build continues")
+
+
 def main():
     repos_cfg = load_json(os.path.join(CONFIG_DIR, "repos.json"), {}) or {}
     comps_cfg = load_json(os.path.join(CONFIG_DIR, "companies.json"), {}) or {}
@@ -700,6 +836,11 @@ def main():
         json.dump(out, f, ensure_ascii=False, indent=2)
     log(f"wrote {OUT_FILE}: {len(kept)} live ({new_count} new, {reappeared} "
         f"reappeared, {delisted} delisted; {len(seen_store)} ever seen)")
+
+    # ---- email digest of brand-new postings (push notification) -----------
+    # "new this run" == first_seen stamped with this run's timestamp.
+    new_postings = [p for p in kept if p.get("first_seen") == seen_now]
+    send_digest(new_postings, out["counts"], seen_now)
 
     # Non-zero exit only if literally every source failed (so CI can alert),
     # but still write whatever we have.

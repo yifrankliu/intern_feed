@@ -80,19 +80,69 @@
   .note{color:var(--muted);font-size:11.5px;margin-top:2px}
   .footer{color:var(--muted);font-size:11.5px;margin-top:16px}
   button.link{background:none;border:none;color:var(--accent);cursor:pointer;font-size:12px;padding:0}
+  /* view tabs */
+  .tabs{display:inline-flex;gap:4px;margin-left:6px}
+  .tab{background:var(--chip);border:1px solid var(--border);color:var(--muted);border-radius:7px;
+    padding:4px 11px;cursor:pointer;font-size:12.5px;user-select:none}
+  .tab.on{background:var(--panel2);color:var(--text);border-color:var(--accent)}
+  .tab .cnt{color:var(--accent2);font-weight:700}
+  /* track buttons in feed */
+  .trackbtn{background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;
+    padding:3px 8px;cursor:pointer;font-size:11.5px;white-space:nowrap}
+  .trackbtn:hover{border-color:var(--accent2);color:var(--accent2)}
+  .appliedmark{display:inline-block;color:var(--accent2);font-weight:600;font-size:11.5px;cursor:pointer;
+    border:1px solid var(--accent2);border-radius:6px;padding:3px 8px;white-space:nowrap}
+  /* applied table editors */
+  select.status,input.adate,input.anotes{background:var(--panel);border:1px solid var(--border);
+    color:var(--text);border-radius:6px;padding:5px 7px;font-size:12.5px;color-scheme:dark}
+  select.status:focus,input.adate:focus,input.anotes:focus{outline:none;border-color:var(--accent)}
+  input.anotes{width:100%;min-width:170px}
+  select.status.s-applied{color:#79c0ff} select.status.s-interview{color:#f2cc60}
+  select.status.s-offer{color:#7ee787} select.status.s-rejected{color:#ff7b72}
+  .removebtn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px}
+  .removebtn:hover{color:var(--danger)}
+  /* sync settings */
+  #syncpanel{display:none;margin:0 0 14px;padding:12px 14px;border:1px solid var(--border);
+    border-radius:8px;background:var(--panel)}
+  #syncpanel.open{display:block}
+  #syncpanel input[type=url]{background:var(--bg);border:1px solid var(--border);color:var(--text);
+    border-radius:7px;padding:7px 10px;width:min(520px,100%);font-size:13px}
+  #syncpanel input[type=url]:focus{outline:none;border-color:var(--accent)}
+  #syncpanel label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+  .syncstate{font-size:12px}
+  .syncstate .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+  .btn{background:var(--accent);border:none;color:#fff;border-radius:7px;padding:6px 12px;cursor:pointer;font-size:12.5px}
+  .btn.sec{background:var(--panel2);color:var(--text);border:1px solid var(--border)}
+  .appliedhead{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px}
 </style>
 </head>
 <body>
 <header>
   <h1>⚡ Intern Feed</h1>
+  <span class="tabs">
+    <span class="tab on" id="tabFeed">Feed</span>
+    <span class="tab" id="tabApplied">Applied <span class="cnt">0</span></span>
+  </span>
   <span class="meta" id="summary">loading…</span>
   <span class="meta" id="newsummary"></span>
   <span style="flex:1"></span>
+  <button class="link" id="syncbtn" title="Configure Google Sheet sync">⚙ sync</button>
+  <button class="link" id="exportbtn" title="Export applied jobs as CSV">export</button>
   <button class="link" id="markseen" title="Mark everything as seen">mark all seen</button>
 </header>
 
 <div class="wrap">
-  <div class="controls">
+  <div id="syncpanel">
+    <label for="syncurl">Google Sheet sync URL — your Apps Script web-app URL (see apps-script/SETUP.md)</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input type="url" id="syncurl" placeholder="https://script.google.com/macros/s/…/exec">
+      <button class="btn" id="savesync">save</button>
+      <button class="btn sec" id="testsync">test</button>
+      <span class="syncstate" id="syncstate"></span>
+    </div>
+    <div class="note" style="margin-top:8px">When set, every “applied” action and status/notes change is pushed to your Google Sheet — your permanent tracker, openable from any device. Leave blank to keep everything in this browser only.</div>
+  </div>
+  <div class="controls" id="feedcontrols">
     <input type="search" id="q" placeholder="Search company, role, location…" autocomplete="off">
     <div class="group" id="datepresets">
       <span class="chip" data-preset="today">today</span>
@@ -117,7 +167,7 @@
     <div class="group" id="sources"></div>
   </div>
 
-  <table>
+  <table id="feedtable">
     <thead><tr>
       <th data-sort="first_seen">First seen <span class="arr"></span></th>
       <th data-sort="company">Company <span class="arr"></span></th>
@@ -126,12 +176,30 @@
       <th>Location</th>
       <th data-sort="posted_date">Posted <span class="arr"></span></th>
       <th>Sources</th>
+      <th>Track</th>
     </tr></thead>
     <tbody id="rows"></tbody>
   </table>
   <div class="empty" id="empty" style="display:none">No postings match these filters.</div>
 
-  <details class="status">
+  <div id="appliedview" style="display:none">
+    <div class="appliedhead">
+      <span class="meta" id="appliedsummary"></span>
+      <span style="flex:1"></span>
+      <span class="syncstate" id="syncstate2"></span>
+      <button class="btn sec" id="syncallbtn">sync all to sheet</button>
+      <button class="btn sec" id="exportbtn2">export CSV</button>
+    </div>
+    <table id="appliedtable">
+      <thead><tr>
+        <th>Company</th><th>Role</th><th>Status</th><th>Applied</th><th>Notes</th><th>Open</th><th></th>
+      </tr></thead>
+      <tbody id="appliedrows"></tbody>
+    </table>
+    <div class="empty" id="appliedempty" style="display:none">No applied jobs yet. Click “+ applied” on any posting in the Feed.</div>
+  </div>
+
+  <details class="status" id="statusdetails">
     <summary id="statsum">Source coverage</summary>
     <div class="statgrid" id="statgrid"></div>
   </details>
@@ -142,6 +210,8 @@
 <script>
 const LS_SEEN = "internfeed.seen.ids.v1";
 const LS_VISIT = "internfeed.lastvisit.v1";
+const LS_APPLIED = "internfeed.applied.v1";
+const LS_SYNC = "internfeed.syncurl.v1";
 const state = {
   data:null, postings:[],
   q:"", cats:new Set(), regions:new Set(),
@@ -150,6 +220,7 @@ const state = {
   sources:new Set(), allSources:[],
   sortKey:"first_seen", sortDir:-1,
   newIds:new Set(), prevSeen:new Set(),
+  view:"feed", applied:{}, syncUrl:"",
 };
 const CATS=[["swe","SWE"],["ml","ML"],["quant","Quant"],["hardware","HW"]];
 const REGIONS=[["us","US"],["remote","Remote"],["intl","Intl"],["unknown","?"]];
@@ -199,6 +270,8 @@ function saveSeen(ids){ localStorage.setItem(LS_SEEN, JSON.stringify([...ids]));
 
 async function init(){
   state.prevSeen = loadSeen();
+  state.applied = loadApplied();
+  state.syncUrl = localStorage.getItem(LS_SYNC) || "";
   let res;
   try{ res = await fetch("./data/postings.json?_="+Date.now()); }
   catch(e){ document.getElementById("summary").textContent="Could not load data/postings.json"; return; }
@@ -303,6 +376,146 @@ function buildControls(){
     const cur=new Set(state.postings.map(p=>p.id)); saveSeen(cur);
     state.newIds=new Set(); render();
   };
+
+  // ---- view tabs (Feed / Applied) ----
+  document.getElementById("tabFeed").onclick=()=>switchView("feed");
+  document.getElementById("tabApplied").onclick=()=>switchView("applied");
+  updateTabCount();
+
+  // ---- sync settings panel ----
+  document.getElementById("syncbtn").onclick=()=>document.getElementById("syncpanel").classList.toggle("open");
+  document.getElementById("syncurl").value=state.syncUrl||"";
+  document.getElementById("savesync").onclick=()=>{
+    state.syncUrl=document.getElementById("syncurl").value.trim();
+    localStorage.setItem(LS_SYNC,state.syncUrl); setSyncState();
+    if(state.syncUrl && appliedCount()) syncAll();
+  };
+  document.getElementById("testsync").onclick=async()=>{
+    const u=document.getElementById("syncurl").value.trim();
+    if(!u){alert("Paste your Apps Script web-app URL first.");return;}
+    await pushSyncTo(u,{type:"upsert",record:{id:"__test__",company:"(test)",role:"connection test",
+      status:"applied",applied_date:ymd(0),notes:"safe to delete",location:"",apply_url:"",
+      updated_at:new Date().toISOString()}});
+    alert("Test row sent. Check your Google Sheet for a “(test)” row — if it appears, sync works (you can delete that row).");
+  };
+  document.getElementById("syncallbtn").onclick=async()=>{
+    if(!state.syncUrl){alert("Set your Google Sheet sync URL first (⚙ sync).");return;}
+    await syncAll(); alert("Pushed all "+appliedCount()+" tracked jobs to your sheet.");
+  };
+  document.getElementById("exportbtn").onclick=exportCSV;
+  document.getElementById("exportbtn2").onclick=exportCSV;
+  setSyncState();
+}
+
+// --------------------------------------------------------------------------- //
+// Applied-jobs tracker
+// --------------------------------------------------------------------------- //
+function loadApplied(){ try{return JSON.parse(localStorage.getItem(LS_APPLIED)||"{}");}catch(e){return {};} }
+function saveApplied(){ localStorage.setItem(LS_APPLIED, JSON.stringify(state.applied)); }
+function isApplied(id){ return !!state.applied[id]; }
+function appliedCount(){ return Object.keys(state.applied).length; }
+function locString(p){ return (p.location||[]).slice(0,3).join(" • "); }
+
+function addApplied(p){
+  if(state.applied[p.id]) return;
+  const rec={ id:p.id, company:p.company, role_title:p.role_title, apply_url:p.apply_url||"",
+    location:locString(p), category:p.category||"",
+    status:"applied", applied_date:ymd(0), notes:"", updated_at:new Date().toISOString() };
+  state.applied[p.id]=rec; saveApplied(); syncRecord(rec); updateTabCount(); renderApplied();
+}
+function updateApplied(id,patch){
+  const r=state.applied[id]; if(!r) return;
+  Object.assign(r,patch); r.updated_at=new Date().toISOString();
+  saveApplied(); syncRecord(r);
+}
+function removeApplied(id){
+  delete state.applied[id]; saveApplied(); syncDelete(id);
+  updateTabCount(); renderApplied(); render();
+}
+
+// ---- sync bridge (page -> Apps Script web app -> Google Sheet) ----
+function pushSyncTo(url,payload){
+  if(!url) return Promise.resolve(false);
+  return fetch(url,{method:"POST",mode:"no-cors",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify(payload)}).then(()=>true).catch(()=>false);
+}
+function pushSync(payload){ return pushSyncTo(state.syncUrl,payload); }
+function recForSheet(r){ return {id:r.id,company:r.company,role:r.role_title,status:r.status,
+  applied_date:r.applied_date,notes:r.notes,location:r.location,apply_url:r.apply_url,updated_at:r.updated_at}; }
+function syncRecord(r){ pushSync({type:"upsert",record:recForSheet(r)}); }
+function syncDelete(id){ pushSync({type:"delete",id:id}); }
+function syncAll(){ return pushSync({type:"bulk",records:Object.values(state.applied).map(recForSheet)}); }
+function setSyncState(){
+  const txt = state.syncUrl
+    ? `<span class="dot" style="background:var(--accent2)"></span>synced to Google Sheet`
+    : `<span class="dot" style="background:var(--muted)"></span>not configured — browser only`;
+  ["syncstate","syncstate2"].forEach(id=>{const el=document.getElementById(id); if(el) el.innerHTML=txt;});
+}
+
+function updateTabCount(){
+  const t=document.getElementById("tabApplied");
+  if(t) t.innerHTML=`Applied <span class="cnt">${appliedCount()}</span>`;
+}
+function switchView(v){
+  state.view=v;
+  const feed=(v==="feed");
+  document.getElementById("tabFeed").classList.toggle("on",feed);
+  document.getElementById("tabApplied").classList.toggle("on",!feed);
+  document.getElementById("feedcontrols").style.display=feed?"":"none";
+  document.getElementById("feedtable").style.display=feed?"":"none";
+  document.getElementById("statusdetails").style.display=feed?"":"none";
+  document.getElementById("footer").style.display=feed?"":"none";
+  document.getElementById("appliedview").style.display=feed?"none":"";
+  if(feed){ render(); } else { document.getElementById("empty").style.display="none"; renderApplied(); }
+}
+function renderApplied(){
+  const tb=document.getElementById("appliedrows"); if(!tb) return; tb.innerHTML="";
+  const list=Object.values(state.applied)
+    .sort((a,b)=>String(b.applied_date||"").localeCompare(String(a.applied_date||"")));
+  document.getElementById("appliedempty").style.display=list.length?"none":"block";
+  document.getElementById("appliedtable").style.display=list.length?"":"none";
+  const STAT=[["applied","Applied"],["interview","Interview"],["offer","Offer"],["rejected","Rejected"]];
+  list.forEach(r=>{
+    const tr=document.createElement("tr"); tr.className="row";
+    tr.innerHTML=`
+      <td class="co">${esc(r.company)}</td>
+      <td class="role">${esc(r.role_title)}<div class="note">${esc(r.location||"")}</div></td>
+      <td></td><td></td><td></td>
+      <td>${r.apply_url?`<a href="${esc(r.apply_url)}" target="_blank" rel="noopener">open ↗</a>`:'—'}</td>
+      <td></td>`;
+    const sel=document.createElement("select"); sel.className="status s-"+r.status;
+    STAT.forEach(([v,l])=>{const o=document.createElement("option");o.value=v;o.textContent=l;
+      if(v===r.status)o.selected=true; sel.appendChild(o);});
+    sel.onchange=()=>{updateApplied(r.id,{status:sel.value}); sel.className="status s-"+sel.value;};
+    tr.children[2].appendChild(sel);
+    const di=document.createElement("input"); di.type="date"; di.className="adate"; di.value=r.applied_date||"";
+    di.onchange=()=>updateApplied(r.id,{applied_date:di.value});
+    tr.children[3].appendChild(di);
+    const ni=document.createElement("input"); ni.type="text"; ni.className="anotes";
+    ni.value=r.notes||""; ni.placeholder="add notes…";
+    let t; ni.oninput=()=>{clearTimeout(t); t=setTimeout(()=>updateApplied(r.id,{notes:ni.value}),500);};
+    tr.children[4].appendChild(ni);
+    const rb=document.createElement("button"); rb.className="removebtn"; rb.textContent="✕";
+    rb.title="Remove from tracker";
+    rb.onclick=()=>{ if(confirm("Remove this job from your tracker?")) removeApplied(r.id); };
+    tr.children[6].appendChild(rb);
+    tb.appendChild(tr);
+  });
+  const c=list.reduce((a,r)=>{a[r.status]=(a[r.status]||0)+1;return a;},{});
+  document.getElementById("appliedsummary").innerHTML=
+    `<b>${list.length}</b> tracked · ${c.applied||0} applied · ${c.interview||0} interview · ${c.offer||0} offer · ${c.rejected||0} rejected`;
+}
+function exportCSV(){
+  const rows=Object.values(state.applied);
+  const head=["company","role","status","applied_date","notes","location","apply_url","id"];
+  const q=s=>`"${String(s==null?"":s).replace(/"/g,'""')}"`;
+  const lines=[head.join(",")].concat(rows.map(r=>
+    [r.company,r.role_title,r.status,r.applied_date,r.notes,r.location,r.apply_url,r.id].map(q).join(",")));
+  const blob=new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="applied-jobs-"+ymd(0)+".csv"; document.body.appendChild(a); a.click();
+  a.remove(); URL.revokeObjectURL(a.href);
 }
 function toggleSet(set,key,el){ if(set.has(key))set.delete(key);else set.add(key); el.classList.toggle("on",set.has(key)); }
 
@@ -355,7 +568,20 @@ function render(){
       <td><span class="tag ${p.category}">${p.category}</span></td>
       <td class="loc">${esc((p.location||[]).slice(0,3).join(" • "))||'—'}</td>
       <td class="when">${fmtDate(p.posted_date)}</td>
-      <td>${badges}</td>`;
+      <td>${badges}</td>
+      <td class="trackcell"></td>`;
+    const tc=tr.querySelector(".trackcell");
+    if(isApplied(p.id)){
+      const b=document.createElement("span"); b.className="appliedmark"; b.textContent="✓ applied";
+      b.title="View in Applied tracker";
+      b.onclick=(e)=>{e.stopPropagation(); switchView("applied");};
+      tc.appendChild(b);
+    } else {
+      const b=document.createElement("button"); b.className="trackbtn"; b.textContent="+ applied";
+      b.title="Add to your applied tracker";
+      b.onclick=(e)=>{e.stopPropagation(); addApplied(p); render();};
+      tc.appendChild(b);
+    }
     tb.appendChild(tr);
   });
   // header arrows
